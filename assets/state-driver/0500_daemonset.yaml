@@ -97,6 +97,17 @@ spec:
       containers:
       - image: "FILLED BY THE OPERATOR"
         imagePullPolicy: IfNotPresent
+        # older images for ubuntu have outdated gpg keys
+        # they will fail to install the driver, see here
+        # https://github.com/NVIDIA/nvidia-docker/issues/1632#issuecomment-1112561324
+        # one could add some logic here or in the go code to find if someone is asking
+        # for an older image and include the following command
+        # apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3b863cc.pub
+        # alternatively, one could just patch the dameonset post helm chart install with:
+        # $ k patch -n gpu-operator daemonsets.apps nvidia-driver-daemonset \
+        # --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/command", \
+        #                     "value": ["sh", "-c",
+        #                     "apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub && nvidia-driver init"]}]'
         name: nvidia-driver-ctr
         command: ["nvidia-driver"]
         args: ["init"]
